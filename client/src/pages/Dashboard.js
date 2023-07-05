@@ -1,6 +1,9 @@
+import {useEffect} from 'react'
+ 
 const Dashboard = () => {
+  
   return (
-    <div>Dashboard live  </div>
+    <div>Dashboard livefsd  </div>
   )
 }
 export default Dashboard
