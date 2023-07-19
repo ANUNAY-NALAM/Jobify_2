@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { DashBoard, Error, Landing, Register, ProtectedRoute } from './pages'
-import { AddJobs, AllJobs, Profile, SharedLayout, Stats } from './pages/dashboard'
+import { AddJob, AllJobs, Profile, SharedLayout, Stats } from './pages/dashboard'
 
 function App() {
   return (
@@ -14,7 +14,7 @@ function App() {
 
           <Route index element={<Stats />} />
           <Route path='all-jobs' element={<AllJobs />} />
-          <Route path='add-job' element={<AddJobs />} />
+          <Route path='add-job' element={<AddJob />} />
           <Route path='profile' element={<Profile />} />
         </Route>
 

@@ -6,8 +6,12 @@ import {
   SETUP_USER_SUCCESS,
   SETUP_USER_ERROR,
   TOGGLE_SIDEBAR,
-  LOGOUT_USER
-
+  LOGOUT_USER,
+  UPDATE_USER_BEGIN,
+  UPDATE_USER_SUCCESS,
+  UPDATE_USER_ERROR,
+  HANDLE_CHANGE,
+  CLEAR_VALUES
 }
   from "./actions";
 import reducer from './reducer';
@@ -18,14 +22,22 @@ const user = localStorage.getItem('user')
 const userLocation = localStorage.getItem('location')
 const initialState = {
   isLoading: false,
+  isEditing:false,
   showAlert: false,
   alertText: '',
   alertType: '',
   user: user ? JSON.parse(user) : null,
   token: token,
   userLocation: userLocation || '',
-  jobLocation: userLocation || '',
   showSidebar:false,
+  editJobId:'',
+  position:'',
+  company:'',
+  jobTypeOptions:['full-time','part-time','remote','internship'],
+  jobType:'full-time',
+  statusOptions:['pending','interview','declined'],
+  status:'pending',
+  jobLocation: userLocation || '',
 };
 
 
@@ -34,6 +46,35 @@ const AppContext = React.createContext();
 
 const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
+
+  
+  const authFetch = axios.create({
+    baseURL: '/api/v1',
+  });
+  // request
+authFetch.interceptors.request.use(
+  (config) => {
+    config.headers['Authorization'] = `Bearer ${state.token}`;
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+// response
+authFetch.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    console.log(error.response);
+    if (error.response.status === 401) {
+      logoutUser()
+    }
+    return Promise.reject(error);
+  }
+);
+
   const displayAlert = () => {
     dispatch({ type: DISPLAY_ALERT });
     clearAlert();
@@ -83,10 +124,39 @@ const AppProvider = ({ children }) => {
     removeUserFromLocalStorage()
   }
   const updateUser =async(currentUser)=>{
-    console.log(currentUser)
+    dispatch({type:UPDATE_USER_BEGIN});
+    try {
+      const {data} = await authFetch.patch('/auth/updateUser',currentUser);
+      const {user,location,token}=data;
+      dispatch({
+        type:UPDATE_USER_SUCCESS,
+        payload:{user,location,token},
+      });
+      addUserToLocalStorage({user,location,token});
+    } catch (error) {
+      if(error.response.status!==401){
+        dispatch({
+          type: UPDATE_USER_ERROR,
+          payload:{msg:error.response.data.msg},
+        })
+      }
+    }
+    clearAlert();
   }
+  const handleChange = ({ name, value }) => {
+    dispatch({
+      type: HANDLE_CHANGE,
+      payload: { name, value },
+    })
+  }
+
+  const clearValues = () => {
+    dispatch({ type: CLEAR_VALUES })
+  }
+  
+ 
   return (
-    <AppContext.Provider value={{ ...state, displayAlert,setupUser,toggleSidebar,logoutUser,updateUser }}>
+    <AppContext.Provider value={{ ...state, displayAlert,setupUser,toggleSidebar,logoutUser,updateUser,handleChange,clearValues}}>
       {children}
     </AppContext.Provider>
   );
