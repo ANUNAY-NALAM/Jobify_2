@@ -15,6 +15,8 @@ import {
   CREATE_JOB_BEGIN,
   CREATE_JOB_SUCCESS,
   CREATE_JOB_ERROR,
+  GET_JOBS_BEGIN,
+  GET_JOBS_SUCCESS
 }
   from "./actions";
 import reducer from './reducer';
@@ -41,6 +43,10 @@ const initialState = {
   statusOptions:['pending','interview','declined'],
   status:'pending',
   jobLocation: userLocation || '',
+  jobs:[],
+  totalJobs:0,
+  numOfPages:1,
+  page:1,
 };
 
 
@@ -181,6 +187,29 @@ authFetch.interceptors.response.use(
     }
     clearAlert();
   }
+
+  const getJobs = async () => {
+    let url = `/jobs`
+  
+    dispatch({ type: GET_JOBS_BEGIN })
+    try {
+      const { data } = await authFetch(url)
+      const { jobs, totalJobs, numOfPages } = data
+      dispatch({
+        type: GET_JOBS_SUCCESS,
+        payload: {
+          jobs,
+          totalJobs,
+          numOfPages,
+        },
+      })
+    } catch (error) {
+      console.log(error.response)
+      //logoutUser()
+    }
+    clearAlert()
+  }
+  
   return (
     <AppContext.Provider value={{ 
       ...state,
@@ -191,7 +220,8 @@ authFetch.interceptors.response.use(
        updateUser,
        handleChange,
        clearValues,
-       createJob}}>
+       createJob,
+       getJobs}}>
       {children}
     </AppContext.Provider>
   );
