@@ -16,7 +16,14 @@ import {
   CREATE_JOB_SUCCESS,
   CREATE_JOB_ERROR,
   GET_JOBS_BEGIN,
-  GET_JOBS_SUCCESS
+  GET_JOBS_SUCCESS,
+  SET_EDIT_JOB,
+  DELETE_JOB_BEGIN,
+  EDIT_JOB_BEGIN,
+  EDIT_JOB_SUCCESS,
+  EDIT_JOB_ERROR,
+  SHOW_STATS_BEGIN,
+  SHOW_STATS_SUCCESS
 }
   from "./actions";
 import reducer from './reducer';
@@ -27,26 +34,28 @@ const user = localStorage.getItem('user')
 const userLocation = localStorage.getItem('location')
 const initialState = {
   isLoading: false,
-  isEditing:false,
+  isEditing: false,
   showAlert: false,
   alertText: '',
   alertType: '',
   user: user ? JSON.parse(user) : null,
   token: token,
   userLocation: userLocation || '',
-  showSidebar:false,
-  editJobId:'',
-  position:'',
-  company:'',
-  jobTypeOptions:['full-time','part-time','remote','internship'],
-  jobType:'full-time',
-  statusOptions:['pending','interview','declined'],
-  status:'pending',
+  showSidebar: false,
+  editJobId: '',
+  position: '',
+  company: '',
+  jobTypeOptions: ['full-time', 'part-time', 'remote', 'internship'],
+  jobType: 'full-time',
+  statusOptions: ['pending', 'interview', 'declined'],
+  status: 'pending',
   jobLocation: userLocation || '',
-  jobs:[],
-  totalJobs:0,
-  numOfPages:1,
-  page:1,
+  jobs: [],
+  totalJobs: 0,
+  numOfPages: 1,
+  page: 1,
+  stats:{},
+  monthlyApplications:[]
 };
 
 
@@ -56,33 +65,33 @@ const AppContext = React.createContext();
 const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  
+
   const authFetch = axios.create({
     baseURL: '/api/v1',
   });
   // request
-authFetch.interceptors.request.use(
-  (config) => {
-    config.headers['Authorization'] = `Bearer ${state.token}`;
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-// response
-authFetch.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    console.log(error.response);
-    if (error.response.status === 401) {
-      logoutUser()
+  authFetch.interceptors.request.use(
+    (config) => {
+      config.headers['Authorization'] = `Bearer ${state.token}`;
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
-  }
-);
+  );
+  // response
+  authFetch.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    (error) => {
+      console.log(error.response);
+      if (error.response.status === 401) {
+        logoutUser()
+      }
+      return Promise.reject(error);
+    }
+  );
 
   const displayAlert = () => {
     dispatch({ type: DISPLAY_ALERT });
@@ -105,15 +114,15 @@ authFetch.interceptors.response.use(
     localStorage.removeItem('user')
     localStorage.removeItem('location')
   }
-  
-  const setupUser = async ({currentUser,endPoint,alertText}) => {
+
+  const setupUser = async ({ currentUser, endPoint, alertText }) => {
     dispatch({ type: SETUP_USER_BEGIN })
     try {
       const { data } = await axios.post(`/api/v1/auth/${endPoint}`, currentUser)
       const { user, token, location } = data
       dispatch({
         type: SETUP_USER_SUCCESS,
-        payload: { user, token, location,alertText }
+        payload: { user, token, location, alertText }
       })
       addUserToLocalStorage({ user, token, location })
     }
@@ -125,28 +134,28 @@ authFetch.interceptors.response.use(
     }
     clearAlert()
   }
-  const toggleSidebar =()=>{
-    dispatch({type:TOGGLE_SIDEBAR})
+  const toggleSidebar = () => {
+    dispatch({ type: TOGGLE_SIDEBAR })
   }
-  const logoutUser =()=>{
-    dispatch({type:LOGOUT_USER})
+  const logoutUser = () => {
+    dispatch({ type: LOGOUT_USER })
     removeUserFromLocalStorage()
   }
-  const updateUser =async(currentUser)=>{
-    dispatch({type:UPDATE_USER_BEGIN});
+  const updateUser = async (currentUser) => {
+    dispatch({ type: UPDATE_USER_BEGIN });
     try {
-      const {data} = await authFetch.patch('/auth/updateUser',currentUser);
-      const {user,location,token}=data;
+      const { data } = await authFetch.patch('/auth/updateUser', currentUser);
+      const { user, location, token } = data;
       dispatch({
-        type:UPDATE_USER_SUCCESS,
-        payload:{user,location,token},
+        type: UPDATE_USER_SUCCESS,
+        payload: { user, location, token },
       });
-      addUserToLocalStorage({user,location,token});
+      addUserToLocalStorage({ user, location, token });
     } catch (error) {
-      if(error.response.status!==401){
+      if (error.response.status !== 401) {
         dispatch({
           type: UPDATE_USER_ERROR,
-          payload:{msg:error.response.data.msg},
+          payload: { msg: error.response.data.msg },
         })
       }
     }
@@ -162,12 +171,12 @@ authFetch.interceptors.response.use(
   const clearValues = () => {
     dispatch({ type: CLEAR_VALUES })
   }
-  
-  const createJob =async()=>{
-    dispatch({type:CREATE_JOB_BEGIN});
+
+  const createJob = async () => {
+    dispatch({ type: CREATE_JOB_BEGIN });
     try {
-      const{position,company,jobLocation,jobType,status}=state;
-      await authFetch.post('/jobs',{
+      const { position, company, jobLocation, jobType, status } = state;
+      await authFetch.post('/jobs', {
         company,
         position,
         jobLocation,
@@ -175,14 +184,14 @@ authFetch.interceptors.response.use(
         status
       });
       dispatch({
-        type:CREATE_JOB_SUCCESS,
+        type: CREATE_JOB_SUCCESS,
       })
-      dispatch({type:CLEAR_VALUES});
+      dispatch({ type: CLEAR_VALUES });
     } catch (error) {
-      if(error.response.status === 401)return;
+      if (error.response.status === 401) return;
       dispatch({
-        type:CREATE_JOB_ERROR,
-        payload:{msg:error.response.data.msg}
+        type: CREATE_JOB_ERROR,
+        payload: { msg: error.response.data.msg }
       })
     }
     clearAlert();
@@ -190,7 +199,7 @@ authFetch.interceptors.response.use(
 
   const getJobs = async () => {
     let url = `/jobs`
-  
+
     dispatch({ type: GET_JOBS_BEGIN })
     try {
       const { data } = await authFetch(url)
@@ -209,19 +218,81 @@ authFetch.interceptors.response.use(
     }
     clearAlert()
   }
-  
+
+  const setEditJob = (id) => {
+    dispatch({ type: SET_EDIT_JOB, payload: { id } })
+  }
+  const editJob = async () => {
+    dispatch({ type: EDIT_JOB_BEGIN });
+    try {
+      const { position, company, jobLocation, jobType, status } = state;
+      await authFetch.patch(`/jobs/${state.editJobId}`, {
+        company,
+        position,
+        jobLocation,
+        jobType,
+        status
+      })
+      dispatch({
+        type: EDIT_JOB_SUCCESS,
+      })
+      dispatch({ type: CLEAR_VALUES })
+    } catch (error) {
+      if (error.response.status === 401) return;
+      dispatch({
+        type: EDIT_JOB_ERROR,
+        payload: { msg: error.response.data.msg }
+      })
+    }
+    clearAlert();
+  }
+
+  const deleteJob = async (jobId) => {
+    dispatch({ type: DELETE_JOB_BEGIN });
+    try {
+      await authFetch.delete(`/jobs/${jobId}`);
+      getJobs();
+    } catch (error) {
+      logoutUser();
+    }
+  }
+
+  const showStats=async()=>{
+    dispatch({type:SHOW_STATS_BEGIN})
+    try {
+      const {data}=await authFetch('/jobs/stats')
+      dispatch({
+        type:SHOW_STATS_SUCCESS,
+        payload:{
+          stats:data.defaultStats,
+          monthlyApplications: data.monthlyApplications
+        }
+      })
+    } catch (error) {
+      console.log(error.response)
+      //logoutUser()
+    }
+    clearAlert()
+  }
+
+
   return (
-    <AppContext.Provider value={{ 
+    <AppContext.Provider value={{
       ...state,
-       displayAlert,
-       setupUser,
-       toggleSidebar,
-       logoutUser,
-       updateUser,
-       handleChange,
-       clearValues,
-       createJob,
-       getJobs}}>
+      displayAlert,
+      setupUser,
+      toggleSidebar,
+      logoutUser,
+      updateUser,
+      handleChange,
+      clearValues,
+      createJob,
+      getJobs,
+      setEditJob,
+      editJob,
+      deleteJob,
+      showStats
+    }}>
       {children}
     </AppContext.Provider>
   );
