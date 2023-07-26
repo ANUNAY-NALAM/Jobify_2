@@ -223,7 +223,7 @@ const reducer = (state, action) => {
             ...state,
             isLoading:false,
             stats: action.payload.stats,
-            montlyApplications:action.payload.monthlyApplications,
+            monthlyApplications:action.payload.monthlyApplications,
         }
     }
     throw new Error(`no su)ch action :${action.type}`)

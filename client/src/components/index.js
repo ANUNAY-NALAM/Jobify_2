@@ -11,6 +11,8 @@ import Loading from './Loading'
 import StatsContainer from './StatsContainer'
 import ChartsContainer from './ChartsContainer'
 import StatItem from './StatItem'
+import BarChartComponent from './BarChartComponent'
+import AreaChartComponent from './AreaChartComponent'
 
 
 export {
@@ -26,6 +28,8 @@ export {
     Loading,
     StatsContainer,
     ChartsContainer,
-    StatItem
+    StatItem,
+    AreaChartComponent,
+    BarChartComponent
 }
 
