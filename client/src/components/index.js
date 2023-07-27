@@ -15,6 +15,7 @@ import BarChartComponent from './BarChartComponent'
 import AreaChartComponent from './AreaChartComponent'
 
 
+
 export {
     Logo,
     FormRow,
@@ -30,6 +31,7 @@ export {
     ChartsContainer,
     StatItem,
     AreaChartComponent,
-    BarChartComponent
+    BarChartComponent,
+    
 }
 

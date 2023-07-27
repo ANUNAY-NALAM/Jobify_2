@@ -23,7 +23,9 @@ import {
   EDIT_JOB_SUCCESS,
   EDIT_JOB_ERROR,
   SHOW_STATS_BEGIN,
-  SHOW_STATS_SUCCESS
+  SHOW_STATS_SUCCESS,
+  CLEAR_FILTERS,
+  CHANGE_PAGE
 }
   from "./actions";
 import reducer from './reducer';
@@ -55,7 +57,12 @@ const initialState = {
   numOfPages: 1,
   page: 1,
   stats:{},
-  monthlyApplications:[]
+  monthlyApplications:[],
+  search: '',
+  searchStatus: 'all',
+  searchType: 'all',
+  sort: 'latest',
+  sortOptions: ['latest', 'oldest', 'a-z', 'z-a'],
 };
 
 
@@ -198,12 +205,16 @@ const AppProvider = ({ children }) => {
   }
 
   const getJobs = async () => {
-    let url = `/jobs`
-
-    dispatch({ type: GET_JOBS_BEGIN })
+    // will add page later
+    const { search, searchStatus, searchType, sort } = state;
+    let url = `/jobs?status=${searchStatus}&jobType=${searchType}&sort=${sort}`;
+    if (search) {
+      url = url + `&search=${search}`;
+    }
+    dispatch({ type: GET_JOBS_BEGIN });
     try {
-      const { data } = await authFetch(url)
-      const { jobs, totalJobs, numOfPages } = data
+      const { data } = await authFetch(url);
+      const { jobs, totalJobs, numOfPages } = data;
       dispatch({
         type: GET_JOBS_SUCCESS,
         payload: {
@@ -211,13 +222,12 @@ const AppProvider = ({ children }) => {
           totalJobs,
           numOfPages,
         },
-      })
+      });
     } catch (error) {
-      console.log(error.response)
-      //logoutUser()
+      logoutUser()
     }
-    clearAlert()
-  }
+    clearAlert();
+  };
 
   const setEditJob = (id) => {
     dispatch({ type: SET_EDIT_JOB, payload: { id } })
@@ -269,11 +279,18 @@ const AppProvider = ({ children }) => {
         }
       })
     } catch (error) {
-      console.log(error.response)
-      //logoutUser()
+      logoutUser()
     }
     clearAlert()
   }
+  const clearFilters = () => {
+    dispatch({ type: CLEAR_FILTERS });
+  };
+
+  const changePage = (page) => {
+    dispatch({ type: CHANGE_PAGE, payload: { page } })
+  }
+  
 
 
   return (
@@ -291,7 +308,9 @@ const AppProvider = ({ children }) => {
       setEditJob,
       editJob,
       deleteJob,
-      showStats
+      showStats,
+      clearFilters,
+      changePage
     }}>
       {children}
     </AppContext.Provider>
