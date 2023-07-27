@@ -15,9 +15,10 @@ const landing = () => {
                  job<span>Tracking</span>app
                </h1>
                <p>
-                 I'm baby whatever pork belly palo santo dreamcatcher cupping blackbird
-                spyplane lumbersexual art party prism lyft disrupt kickstarter shaman 
-                cred. Godard helvetica ugh pinterest disrupt shabby chic lo-fi actually pop-up biodiesel retro fixie neutra wolf. 
+               Hello, This is Nalam Anunay. Welcome to the Jobify App. 
+               To get a better understanding of the app, you can log in using the following credentials:
+               Username: anu@gmail.com
+               Password: secret
                </p>
                <Link to='/register' className='btn btn-hero'>Login/Register</Link>
 
